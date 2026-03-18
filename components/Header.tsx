@@ -5,7 +5,7 @@ import Link from "next/link";
 import gsap from "gsap";
 
 const navLinks = [
-  { href: "/tienda", label: "Tienda" },
+  { href: "/catalogo", label: "Catálogo" },
   { href: "/colecciones", label: "Colecciones" },
   { href: "/nosotros", label: "Nosotros" },
 ];

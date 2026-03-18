@@ -12,7 +12,7 @@ if (typeof window !== "undefined") {
 
 const footerLinks = {
   tienda: [
-    { href: "/tienda", label: "Todos los productos" },
+    { href: "/catalogo", label: "Todos los productos" },
     { href: "/colecciones", label: "Colecciones" },
     { href: "/novedades", label: "Novedades" },
     { href: "/ofertas", label: "Ofertas" },
@@ -277,7 +277,7 @@ function NewsletterForm() {
       />
       <button
         type="submit"
-        className="px-6 py-3 bg-white text-black font-inter text-sm font-medium hover:bg-white/90 transition-colors duration-300"
+        className="px-6 py-3 bg-white text-black font-inter text-sm font-medium hover:bg-white/90 transition-colors duration-300 cursor-pointer"
       >
         Suscribirse
       </button>

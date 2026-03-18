@@ -135,3 +135,17 @@
     background: var(--color-brand-gray-600);
   }
 }
+
+/* Animaciones del Hero */
+@keyframes scroll-line {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(200%);
+  }
+}
+
+.animate-scroll-line {
+  animation: scroll-line 1.5s ease-in-out infinite;
+}
