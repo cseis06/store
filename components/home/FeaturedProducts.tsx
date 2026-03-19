@@ -103,7 +103,7 @@ export default function FeaturedProducts() {
 
   return (
     <section ref={sectionRef} className="py-20 lg:py-32">
-      <div className="container-fiver">
+      <div className="container-kiren">
         {/* Título */}
         <h2
           ref={titleRef}

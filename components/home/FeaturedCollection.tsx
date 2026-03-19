@@ -133,7 +133,7 @@ export default function FeaturedCollection() {
 
   return (
     <section ref={sectionRef} className="py-20 lg:py-32">
-      <div className="container-fiver">
+      <div className="container-kiren">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
           {/* Banner vertical de la colección */}
           <Link

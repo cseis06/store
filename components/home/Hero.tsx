@@ -9,7 +9,7 @@ const slides = [
   {
     id: 1,
     src: "/images/hero/slide-1.jpg",
-    alt: "Colección minimalista FIVER",
+    alt: "Colección minimalista kiren",
   },
   {
     id: 2,
@@ -19,7 +19,7 @@ const slides = [
   {
     id: 3,
     src: "/images/hero/slide-3.jpg",
-    alt: "Nueva colección FIVER",
+    alt: "Nueva colección KIREN",
   },
 ];
 

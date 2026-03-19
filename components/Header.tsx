@@ -7,7 +7,7 @@ import gsap from "gsap";
 const navLinks = [
   { href: "/catalogo", label: "Catálogo" },
   { href: "/colecciones", label: "Colecciones" },
-  { href: "/nosotros", label: "Nosotros" },
+  { href: "/ofertas", label: "Ofertas" },
 ];
 
 export default function Header() {
@@ -81,7 +81,7 @@ export default function Header() {
             href="/"
             className="font-oswald text-2xl lg:text-3xl font-bold tracking-wider text-black hover:opacity-70 transition-opacity duration-300"
           >
-            FIVER
+            KIREN
           </Link>
 
           {/* Navegación Desktop */}

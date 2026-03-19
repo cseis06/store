@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* 
- * FIVER - Global Styles
+ * kiren - Global Styles
  * Minimal aesthetic with black & white palette
  */
 
@@ -82,7 +82,7 @@
 /* Utility classes adicionales */
 @layer utilities {
   /* Contenedor principal */
-  .container-fiver {
+  .container-kiren {
     @apply max-w-[1440px] mx-auto px-6 lg:px-12;
   }
 

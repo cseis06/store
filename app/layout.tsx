@@ -20,8 +20,8 @@ const oswald = Oswald({
 });
 
 export const metadata: Metadata = {
-  title: "FIVER | Tienda Minimalista",
-  description: "Descubre moda y productos de estilo de vida minimalista en FIVER.",
+  title: "KIREN | Tienda Minimalista",
+  description: "Descubre moda y productos de estilo de vida minimalista en kiren.",
   keywords: ["minimalista", "moda", "tienda", "estilo de vida", "ropa"],
 };
 

@@ -14,18 +14,15 @@ const footerLinks = {
   tienda: [
     { href: "/catalogo", label: "Todos los productos" },
     { href: "/colecciones", label: "Colecciones" },
-    { href: "/novedades", label: "Novedades" },
     { href: "/ofertas", label: "Ofertas" },
   ],
   empresa: [
     { href: "/nosotros", label: "Nosotros" },
-    { href: "/contacto", label: "Contacto" },
     { href: "/tiendas", label: "Tiendas físicas" },
     { href: "/trabaja-con-nosotros", label: "Trabaja con nosotros" },
   ],
   ayuda: [
-    { href: "/envios", label: "Envíos" },
-    { href: "/devoluciones", label: "Devoluciones" },
+    { href: "/devoluciones", label: "Política de Devoluciones" },
     { href: "/tallas", label: "Guía de tallas" },
     { href: "/faq", label: "Preguntas frecuentes" },
   ],
@@ -109,7 +106,7 @@ export default function Footer() {
       {/* Sección superior: Logo + Newsletter */}
       <div
         ref={topSectionRef}
-        className="container-fiver py-16 lg:py-20 border-b border-white/10"
+        className="container-kiren py-16 lg:py-20 border-b border-white/10"
       >
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-start">
           {/* Logo y descripción */}
@@ -118,7 +115,7 @@ export default function Footer() {
               href="/"
               className="font-oswald text-3xl lg:text-4xl font-bold tracking-wider inline-block mb-6 hover:opacity-70 transition-opacity duration-300"
             >
-              FIVER
+              KIREN
             </Link>
             <p className="font-inter text-white/60 text-base leading-relaxed max-w-md">
               Esenciales minimalistas para quienes valoran la simplicidad. 
@@ -142,7 +139,7 @@ export default function Footer() {
       {/* Sección media: Links de navegación */}
       <div
         ref={columnsRef}
-        className="container-fiver py-12 lg:py-16 border-b border-white/10"
+        className="container-kiren py-12 lg:py-16 border-b border-white/10"
       >
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 lg:gap-12">
           {/* Columna: Tienda */}
@@ -226,10 +223,10 @@ export default function Footer() {
       </div>
 
       {/* Sección inferior: Copyright y legales */}
-      <div ref={bottomRef} className="container-fiver py-6 lg:py-8">
+      <div ref={bottomRef} className="container-kiren py-6 lg:py-8">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="font-inter text-xs text-white/40">
-            © {new Date().getFullYear()} FIVER. Todos los derechos reservados.
+            © {new Date().getFullYear()} KIREN. Todos los derechos reservados.
           </p>
           <div className="flex gap-6">
             <Link

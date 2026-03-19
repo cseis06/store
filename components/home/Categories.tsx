@@ -102,7 +102,7 @@ export default function Categories() {
 
   return (
     <section ref={sectionRef} className="py-20 lg:py-32 bg-black/[0.02]">
-      <div className="container-fiver">
+      <div className="container-kiren">
         {/* Título */}
         <h2
           ref={titleRef}
