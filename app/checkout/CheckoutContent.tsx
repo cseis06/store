@@ -167,10 +167,22 @@ export default function CheckoutContent({ initialData }: CheckoutContentProps) {
     setIsLoading(true)
 
     try {
+      // Preparar items del carrito para enviar al servidor
+      const cartItems = items.map((item) => ({
+        productId: item.productId,
+        variantId: item.variantId,
+        quantity: item.quantity,
+        productName: item.product.name,
+        productImage: item.product.image,
+        variantName: item.variant?.name || null,
+        unitPrice: getItemPrice(item),
+      }))
+
       const result = await createOrder({
         paymentMethod,
         shippingAddress: shippingData,
         notes: notes || undefined,
+        items: cartItems,
       })
 
       if (!result.success) {

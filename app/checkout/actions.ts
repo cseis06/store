@@ -60,6 +60,7 @@ export async function createOrder(data: CreateOrderInput): Promise<CreateOrderRe
       .from("orders")
       .insert({
         user_id: user.id,
+        customer_email: user.email,
         status: "pending",
         payment_status: "pending",
         payment_method: data.paymentMethod,
@@ -88,6 +89,7 @@ export async function createOrder(data: CreateOrderInput): Promise<CreateOrderRe
       quantity: item.quantity,
       unit_price: item.unitPrice,
       subtotal: item.subtotal,
+      total_price: item.subtotal
     }))
 
     const { error: itemsError } = await supabase
