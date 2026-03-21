@@ -1,74 +1,71 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-
-interface FiltersProps {
-  onFilterChange: (filters: FilterState) => void;
-  activeFilters: FilterState;
-}
+import { useState } from "react"
+import { Category } from "@/lib/categories"
 
 export interface FilterState {
-  category: string | null;
-  priceRange: string | null;
-  sortBy: string;
+  category: string | null
+  priceRange: string | null
+  sortBy: string
 }
 
-const categories = [
-  { slug: "remeras", label: "Remeras" },
-  { slug: "tops", label: "Tops" },
-  { slug: "polleras", label: "Polleras" },
-  { slug: "shorts", label: "Shorts" },
-  { slug: "pantalones", label: "Pantalones" },
-  { slug: "accesorios", label: "Accesorios" },
-];
+interface FiltersProps {
+  onFilterChange: (filters: FilterState) => void
+  activeFilters: FilterState
+  categories: Category[]
+}
 
 const priceRanges = [
-  { value: "0-30000", label: "Hasta $30.000" },
-  { value: "30000-60000", label: "$30.000 - $60.000" },
-  { value: "60000-100000", label: "$60.000 - $100.000" },
-  { value: "100000+", label: "Más de $100.000" },
-];
+  { value: "0-30000", label: "Hasta Gs. 30.000" },
+  { value: "30000-60000", label: "Gs. 30.000 - 60.000" },
+  { value: "60000-100000", label: "Gs. 60.000 - 100.000" },
+  { value: "100000+", label: "Más de Gs. 100.000" },
+]
 
 const sortOptions = [
   { value: "newest", label: "Más recientes" },
   { value: "price-asc", label: "Menor precio" },
   { value: "price-desc", label: "Mayor precio" },
   { value: "name-asc", label: "A - Z" },
-];
+]
 
-export default function CatalogFilters({ onFilterChange, activeFilters }: FiltersProps) {
-  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+export default function CatalogFilters({ 
+  onFilterChange, 
+  activeFilters,
+  categories 
+}: FiltersProps) {
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
 
   const handleCategoryChange = (slug: string | null) => {
     onFilterChange({
       ...activeFilters,
       category: activeFilters.category === slug ? null : slug,
-    });
-  };
+    })
+  }
 
   const handlePriceChange = (value: string | null) => {
     onFilterChange({
       ...activeFilters,
       priceRange: activeFilters.priceRange === value ? null : value,
-    });
-  };
+    })
+  }
 
   const handleSortChange = (value: string) => {
     onFilterChange({
       ...activeFilters,
       sortBy: value,
-    });
-  };
+    })
+  }
 
   const clearFilters = () => {
     onFilterChange({
       category: null,
       priceRange: null,
       sortBy: "newest",
-    });
-  };
+    })
+  }
 
-  const hasActiveFilters = activeFilters.category || activeFilters.priceRange;
+  const hasActiveFilters = activeFilters.category || activeFilters.priceRange
 
   return (
     <>
@@ -145,11 +142,10 @@ export default function CatalogFilters({ onFilterChange, activeFilters }: Filter
 
             <FilterContent
               activeFilters={activeFilters}
+              categories={categories}
               onCategoryChange={handleCategoryChange}
               onPriceChange={handlePriceChange}
               onSortChange={handleSortChange}
-              onClearFilters={clearFilters}
-              hasActiveFilters={hasActiveFilters}
             />
 
             <button
@@ -179,33 +175,30 @@ export default function CatalogFilters({ onFilterChange, activeFilters }: Filter
 
           <FilterContent
             activeFilters={activeFilters}
+            categories={categories}
             onCategoryChange={handleCategoryChange}
             onPriceChange={handlePriceChange}
             onSortChange={handleSortChange}
-            onClearFilters={clearFilters}
-            hasActiveFilters={hasActiveFilters}
           />
         </div>
       </aside>
     </>
-  );
+  )
 }
 
 // Componente interno con el contenido de los filtros
 function FilterContent({
   activeFilters,
+  categories,
   onCategoryChange,
   onPriceChange,
   onSortChange,
-  onClearFilters,
-  hasActiveFilters,
 }: {
-  activeFilters: FilterState;
-  onCategoryChange: (slug: string | null) => void;
-  onPriceChange: (value: string | null) => void;
-  onSortChange: (value: string) => void;
-  onClearFilters: () => void;
-  hasActiveFilters: boolean | string | null;
+  activeFilters: FilterState
+  categories: Category[]
+  onCategoryChange: (slug: string | null) => void
+  onPriceChange: (value: string | null) => void
+  onSortChange: (value: string) => void
 }) {
   return (
     <div className="space-y-8">
@@ -231,27 +224,34 @@ function FilterContent({
         </div>
       </div>
 
-      {/* Categorías */}
-      <div>
-        <h4 className="font-inter text-xs font-medium uppercase tracking-wider text-black/50 mb-4">
-          Categoría
-        </h4>
-        <div className="space-y-2">
-          {categories.map((category) => (
-            <button
-              key={category.slug}
-              onClick={() => onCategoryChange(category.slug)}
-              className={`block w-full text-left font-inter text-sm py-1 transition-colors ${
-                activeFilters.category === category.slug
-                  ? "text-black font-medium"
-                  : "text-black/60 hover:text-black"
-              }`}
-            >
-              {category.label}
-            </button>
-          ))}
+      {/* Categorías (dinámicas desde Supabase) */}
+      {categories.length > 0 && (
+        <div>
+          <h4 className="font-inter text-xs font-medium uppercase tracking-wider text-black/50 mb-4">
+            Categoría
+          </h4>
+          <div className="space-y-2">
+            {categories.map((category) => (
+              <button
+                key={category.id}
+                onClick={() => onCategoryChange(category.slug)}
+                className={`block w-full text-left font-inter text-sm py-1 transition-colors ${
+                  activeFilters.category === category.slug
+                    ? "text-black font-medium"
+                    : "text-black/60 hover:text-black"
+                }`}
+              >
+                {category.name}
+                {category.productCount !== undefined && (
+                  <span className="text-black/30 ml-1">
+                    ({category.productCount})
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Precio */}
       <div>
@@ -275,5 +275,5 @@ function FilterContent({
         </div>
       </div>
     </div>
-  );
+  )
 }
