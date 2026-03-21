@@ -2,43 +2,154 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Product, ProductVariant } from "@/types/product";
+import { useRouter } from "next/navigation";
+import { Product, ProductVariant, hasDiscount, getDiscountPercentage } from "@/types/product";
+import { useCartStore } from "@/stores/cartStore";
 
 interface ProductInfoProps {
   product: Product;
 }
 
-// Formatear precio en pesos argentinos
+// Formatear precio en guaraníes
 const formatPrice = (price: number) => {
-  return new Intl.NumberFormat("es-AR", {
+  return new Intl.NumberFormat("es-PY", {
     style: "currency",
-    currency: "ARS",
+    currency: "PYG",
     minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   }).format(price);
 };
 
 export default function ProductInfo({ product }: ProductInfoProps) {
+  const router = useRouter();
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [openAccordion, setOpenAccordion] = useState<string | null>("detalles");
+  const [isAdding, setIsAdding] = useState(false);
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Store del carrito
+  const { addItem, openCart } = useCartStore();
 
   // Verificar si hay stock disponible
   const hasStock = product.variants.some((v) => v.stock > 0);
-  const selectedHasStock = selectedVariant ? selectedVariant.stock > 0 : false;
+
+  // Obtener imagen principal
+  const primaryImage = product.images.find(img => img.isPrimary) || product.images[0];
+
+  // Calcular si tiene descuento
+  const showDiscount = hasDiscount(product.price, product.compareAtPrice);
+  const discountPercentage = getDiscountPercentage(product.price, product.compareAtPrice);
 
   // Manejar agregar al carrito
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!selectedVariant) {
-      alert("Por favor seleccioná una talla");
+      setMessage({ type: 'error', text: 'Por favor seleccioná una talla' });
+      setTimeout(() => setMessage(null), 3000);
       return;
     }
 
-    // Aquí iría la lógica de agregar al carrito
-    console.log("Agregar al carrito:", {
-      product: product.id,
-      variant: selectedVariant.id,
-      quantity,
-    });
+    if (selectedVariant.stock < quantity) {
+      setMessage({ type: 'error', text: `Solo hay ${selectedVariant.stock} unidades disponibles` });
+      setTimeout(() => setMessage(null), 3000);
+      return;
+    }
+
+    setIsAdding(true);
+    setMessage(null);
+
+    try {
+      const result = await addItem({
+        productId: product.id,
+        variantId: selectedVariant.id,
+        quantity,
+        product: {
+          name: product.name,
+          slug: product.slug,
+          price: product.price,
+          compareAtPrice: product.compareAtPrice,
+          image: primaryImage?.url || null,
+        },
+        variant: {
+          id: selectedVariant.id,
+          name: selectedVariant.name,
+          size: selectedVariant.size,
+          color: selectedVariant.color,
+          priceAdjustment: selectedVariant.priceAdjustment,
+          stockQuantity: selectedVariant.stock,
+        },
+      });
+
+      if (result.success) {
+        setMessage({ type: 'success', text: '¡Agregado al carrito!' });
+        openCart();
+        setQuantity(1);
+      } else {
+        setMessage({ type: 'error', text: result.error || 'Error al agregar' });
+      }
+    } catch (error) {
+      setMessage({ type: 'error', text: 'Error al agregar al carrito' });
+    } finally {
+      setIsAdding(false);
+      setTimeout(() => setMessage(null), 3000);
+    }
+  };
+
+  // Manejar "Comprar ahora"
+  const handleBuyNow = async () => {
+    if (!selectedVariant) {
+      setMessage({ type: 'error', text: 'Por favor seleccioná una talla' });
+      setTimeout(() => setMessage(null), 3000);
+      return;
+    }
+
+    setIsAdding(true);
+
+    try {
+      const result = await addItem({
+        productId: product.id,
+        variantId: selectedVariant.id,
+        quantity,
+        product: {
+          name: product.name,
+          slug: product.slug,
+          price: product.price,
+          compareAtPrice: product.compareAtPrice,
+          image: primaryImage?.url || null,
+        },
+        variant: {
+          id: selectedVariant.id,
+          name: selectedVariant.name,
+          size: selectedVariant.size,
+          color: selectedVariant.color,
+          priceAdjustment: selectedVariant.priceAdjustment,
+          stockQuantity: selectedVariant.stock,
+        },
+      });
+
+      if (result.success) {
+        router.push('/checkout');
+      } else {
+        setMessage({ type: 'error', text: result.error || 'Error al procesar' });
+      }
+    } catch (error) {
+      setMessage({ type: 'error', text: 'Error al procesar' });
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  // Calcular precio final con ajuste de variante
+  const getFinalPrice = () => {
+    const adjustment = selectedVariant?.priceAdjustment || 0;
+    return product.price + adjustment;
+  };
+
+  // Calcular precio anterior con ajuste de variante
+  const getOriginalPrice = () => {
+    if (!product.compareAtPrice) return null;
+    const adjustment = selectedVariant?.priceAdjustment || 0;
+    return product.compareAtPrice + adjustment;
   };
 
   return (
@@ -76,7 +187,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
             Nuevo
           </span>
         )}
-        {product.isSale && (
+        {product.isSale && showDiscount && (
           <span className="inline-block px-2 py-1 bg-white text-black font-inter text-[10px] tracking-wider uppercase border border-black">
             Oferta
           </span>
@@ -90,20 +201,20 @@ export default function ProductInfo({ product }: ProductInfoProps) {
 
       {/* Precio */}
       <div className="flex items-center gap-3 mb-6">
-        {product.salePrice ? (
+        <span className="font-inter text-2xl">
+          {formatPrice(getFinalPrice())}
+        </span>
+        
+        {/* Precio anterior tachado (si hay descuento) */}
+        {showDiscount && getOriginalPrice() && (
           <>
-            <span className="font-inter text-2xl">
-              {formatPrice(product.salePrice)}
-            </span>
             <span className="font-inter text-lg text-black/40 line-through">
-              {formatPrice(product.price)}
+              {formatPrice(getOriginalPrice()!)}
             </span>
             <span className="font-inter text-sm text-black bg-black/5 px-2 py-1">
-              -{Math.round((1 - product.salePrice / product.price) * 100)}%
+              -{discountPercentage}%
             </span>
           </>
-        ) : (
-          <span className="font-inter text-2xl">{formatPrice(product.price)}</span>
         )}
       </div>
 
@@ -115,7 +226,9 @@ export default function ProductInfo({ product }: ProductInfoProps) {
       {/* Selector de tallas */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-3">
-          <span className="font-inter text-sm font-medium">Talla</span>
+          <span className="font-inter text-sm font-medium">
+            Talla {selectedVariant && <span className="text-black/50">— {selectedVariant.size}</span>}
+          </span>
           <button className="font-inter text-xs text-black/50 hover:text-black transition-colors underline underline-offset-2">
             Guía de tallas
           </button>
@@ -124,7 +237,10 @@ export default function ProductInfo({ product }: ProductInfoProps) {
           {product.variants.map((variant) => (
             <button
               key={variant.id}
-              onClick={() => setSelectedVariant(variant)}
+              onClick={() => {
+                setSelectedVariant(variant);
+                setMessage(null);
+              }}
               disabled={variant.stock === 0}
               className={`min-w-[48px] h-12 px-4 font-inter text-sm border transition-all duration-200 cursor-pointer ${
                 selectedVariant?.id === variant.id
@@ -189,22 +305,67 @@ export default function ProductInfo({ product }: ProductInfoProps) {
         </div>
       </div>
 
+      {/* Mensaje de feedback */}
+      {message && (
+        <div
+          className={`mb-4 p-3 font-inter text-sm ${
+            message.type === 'success'
+              ? 'bg-green-50 text-green-800 border border-green-200'
+              : 'bg-red-50 text-red-800 border border-red-200'
+          }`}
+        >
+          {message.text}
+        </div>
+      )}
+
       {/* Botón agregar al carrito */}
       <button
         onClick={handleAddToCart}
-        disabled={!hasStock}
-        className={`w-full py-4 font-inter text-sm tracking-wide transition-all duration-300 mb-4 ${
-          hasStock
+        disabled={!hasStock || isAdding}
+        className={`w-full py-4 font-inter text-sm tracking-wide transition-all duration-300 mb-4 flex items-center justify-center gap-2 ${
+          hasStock && !isAdding
             ? "bg-black text-white hover:bg-black/90 cursor-pointer"
             : "bg-black/20 text-black/50 cursor-not-allowed"
         }`}
       >
-        {hasStock ? "Agregar al carrito" : "Agotado"}
+        {isAdding ? (
+          <>
+            <svg
+              className="animate-spin h-4 w-4"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+              />
+            </svg>
+            Agregando...
+          </>
+        ) : hasStock ? (
+          "Agregar al carrito"
+        ) : (
+          "Agotado"
+        )}
       </button>
 
       {/* Botón comprar ahora */}
       {hasStock && (
-        <button className="w-full py-4 font-inter text-sm tracking-wide border border-black text-black hover:bg-black hover:text-white transition-all duration-300 mb-8 cursor-pointer">
+        <button
+          onClick={handleBuyNow}
+          disabled={isAdding}
+          className="w-full py-4 font-inter text-sm tracking-wide border border-black text-black hover:bg-black hover:text-white transition-all duration-300 mb-8 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        >
           Comprar ahora
         </button>
       )}
@@ -264,7 +425,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
           <div className="font-inter text-sm text-black/70 space-y-3">
             <p>
               <strong className="text-black">Envío gratis</strong> en compras mayores a
-              $50.000.
+              Gs. 500.000.
             </p>
             <p>Envíos a todo el país en 3-5 días hábiles.</p>
             <p>

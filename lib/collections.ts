@@ -1,340 +1,247 @@
-import { Collection, CollectionWithProducts, ProductListItem, ApiResponse } from "@/types/product";
+import { createClient } from '@/lib/supabase/server'
+import { createStaticClient } from '@/lib/supabase/static'
+import { 
+  Collection, 
+  CollectionWithProducts, 
+  ProductListItem,
+  transformProductListItem 
+} from '@/types/product'
 
 // ============================================
-// CONFIGURACION DE API
+// OBTENER TODAS LAS COLECCIONES
 // ============================================
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.kiren.com";
-const USE_MOCK_DATA = true;
-
-// ============================================
-// FUNCIONES DE API
-// ============================================
-
-/**
- * Obtener una coleccion por su slug
- */
-export async function getCollectionBySlug(
-  slug: string
-): Promise<ApiResponse<CollectionWithProducts | null>> {
-  if (USE_MOCK_DATA) {
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    const collection = mockCollections.find((c) => c.slug === slug);
-    
-    if (!collection) {
-      return {
-        data: null,
-        success: false,
-        error: "Coleccion no encontrada",
-      };
-    }
-
-    // Obtener productos de esta coleccion
-    const products = mockCollectionProducts.filter(
-      (p) => p.collectionSlug === slug
-    );
-
-    return {
-      data: {
-        ...collection,
-        products: products.map((p) => ({
-          id: p.id,
-          name: p.name,
-          slug: p.slug,
-          price: p.price,
-          salePrice: p.salePrice,
-          image: p.image,
-          category: p.category,
-          isNew: p.isNew,
-          isSale: p.isSale,
-        })),
-      },
-      success: true,
-    };
-  }
-
+export async function getAllCollections(options?: {
+  featured?: boolean
+  limit?: number
+}): Promise<Collection[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/collections/${slug}`, {
-      next: { revalidate: 60 },
-    });
+    const supabase = await createClient()
 
-    if (!response.ok) {
-      return {
-        data: null,
-        success: false,
-        error: "Error al obtener la coleccion",
-      };
+    let query = supabase
+      .from('collections')
+      .select('*')
+      .eq('is_active', true)
+      .order('display_order', { ascending: true })
+
+    if (options?.featured) {
+      query = query.eq('is_featured', true)
     }
 
-    const data = await response.json();
-    return {
-      data: data,
-      success: true,
-    };
+    if (options?.limit) {
+      query = query.limit(options.limit)
+    }
+
+    const { data, error } = await query
+
+    if (error) {
+      console.error('Error fetching collections:', error)
+      return []
+    }
+
+    return (data || []).map(transformCollection)
   } catch (error) {
-    return {
-      data: null,
-      success: false,
-      error: "Error de conexion",
-    };
+    console.error('Error in getAllCollections:', error)
+    return []
   }
 }
 
-/**
- * Obtener todas las colecciones
- */
-export async function getAllCollections(): Promise<Collection[]> {
-  if (USE_MOCK_DATA) {
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    return mockCollections;
-  }
+// ============================================
+// OBTENER COLECCIONES DESTACADAS
+// ============================================
 
-  try {
-    const response = await fetch(`${API_BASE_URL}/collections`);
-    const data = await response.json();
-    return data.collections || [];
-  } catch (error) {
-    return [];
-  }
+export async function getFeaturedCollections(limit: number = 4): Promise<Collection[]> {
+  return getAllCollections({ featured: true, limit })
 }
 
-/**
- * Obtener todos los slugs de colecciones (para generateStaticParams)
- */
+// ============================================
+// OBTENER TODOS LOS SLUGS (para generateStaticParams)
+// ============================================
+
 export async function getAllCollectionSlugs(): Promise<string[]> {
-  if (USE_MOCK_DATA) {
-    return mockCollections
-      .filter((c) => c.badge !== "upcoming")
-      .map((c) => c.slug);
-  }
-
   try {
-    const response = await fetch(`${API_BASE_URL}/collections/slugs`);
-    const data = await response.json();
-    return data.slugs || [];
+    // Usar cliente estático (sin cookies) para build time
+    const supabase = createStaticClient()
+
+    const { data, error } = await supabase
+      .from('collections')
+      .select('slug')
+      .eq('is_active', true)
+
+    if (error) {
+      console.error('Error fetching collection slugs:', error)
+      return []
+    }
+
+    return data?.map((c) => c.slug) || []
   } catch (error) {
-    return [];
+    console.error('Error in getAllCollectionSlugs:', error)
+    return []
   }
 }
 
 // ============================================
-// DATOS MOCK
+// OBTENER COLECCIÓN POR SLUG CON PRODUCTOS
 // ============================================
 
-const mockCollections: Collection[] = [
-  {
-    id: "col_001",
-    name: "Essentials",
-    slug: "essentials",
-    description: "Piezas atemporales que forman la base de tu guardarropa. Diseños simples, materiales nobles y cortes perfectos que nunca pasan de moda.",
-    image: "/images/collections/essentials.jpg",
-    banner: "/images/collections/essentials-banner.jpg",
-    badge: "permanent",
-    productCount: 12,
-    createdAt: "2024-01-01T00:00:00Z",
-  },
-  {
-    id: "col_002",
-    name: "Otono/Invierno 2025",
-    slug: "aw-2025",
-    description: "Nuestra coleccion de temporada inspirada en la arquitectura brutalista. Siluetas estructuradas, tonos neutros y texturas envolventes.",
-    image: "/images/collections/aw-2025.jpg",
-    banner: "/images/collections/aw-2025-banner.jpg",
-    badge: "current",
-    season: "Otono/Invierno",
-    year: "2025",
-    productCount: 18,
-    createdAt: "2025-02-01T00:00:00Z",
-  },
-  {
-    id: "col_003",
-    name: "Minimal Office",
-    slug: "minimal-office",
-    description: "Elegancia profesional sin esfuerzo. Piezas versatiles que transicionan del trabajo al after office con naturalidad.",
-    image: "/images/collections/minimal-office.jpg",
-    banner: "/images/collections/minimal-office-banner.jpg",
-    badge: "capsule",
-    productCount: 8,
-    createdAt: "2025-01-15T00:00:00Z",
-  },
-  {
-    id: "col_004",
-    name: "Weekend",
-    slug: "weekend",
-    description: "Comodidad y estilo para tus dias de descanso. Prendas relajadas en materiales suaves que invitan a disfrutar.",
-    image: "/images/collections/weekend.jpg",
-    banner: "/images/collections/weekend-banner.jpg",
-    badge: "capsule",
-    productCount: 10,
-    createdAt: "2025-01-20T00:00:00Z",
-  },
-  {
-    id: "col_005",
-    name: "Primavera/Verano 2025",
-    slug: "ss-2025",
-    description: "Proximamente. Una celebracion del sol y la ligereza.",
-    image: "/images/collections/ss-2025.jpg",
-    badge: "upcoming",
-    season: "Primavera/Verano",
-    year: "2025",
-    productCount: 0,
-    createdAt: "2025-03-01T00:00:00Z",
-  },
-  {
-    id: "col_006",
-    name: "Accesorios",
-    slug: "accesorios",
-    description: "Los detalles que completan cada look. Bolsos, cinturones y accesorios en materiales nobles.",
-    image: "/images/collections/accesorios.jpg",
-    banner: "/images/collections/accesorios-banner.jpg",
-    badge: "permanent",
-    productCount: 6,
-    createdAt: "2024-06-01T00:00:00Z",
-  },
-];
+export async function getCollectionBySlug(
+  slug: string,
+  options?: {
+    limit?: number
+    page?: number
+    sortBy?: 'price_asc' | 'price_desc' | 'newest' | 'name'
+  }
+): Promise<CollectionWithProducts | null> {
+  try {
+    const supabase = await createClient()
 
-interface MockCollectionProduct extends ProductListItem {
-  collectionSlug: string;
+    // Primero obtener la colección
+    const { data: collection, error: collectionError } = await supabase
+      .from('collections')
+      .select('*')
+      .eq('slug', slug)
+      .eq('is_active', true)
+      .single()
+
+    if (collectionError || !collection) {
+      console.error('Error fetching collection:', collectionError)
+      return null
+    }
+
+    // Luego obtener los productos de la colección
+    const page = options?.page || 1
+    const limit = options?.limit || 12
+    const offset = (page - 1) * limit
+
+    let productsQuery = supabase
+      .from('product_collections')
+      .select(`
+        display_order,
+        products!inner (
+          id,
+          name,
+          slug,
+          price,
+          compare_at_price,
+          is_featured,
+          is_new,
+          is_on_sale,
+          created_at,
+          product_images!inner (
+            url,
+            is_primary
+          ),
+          categories (
+            name,
+            slug
+          )
+        )
+      `)
+      .eq('collection_id', collection.id)
+      .eq('products.is_active', true)
+      .eq('products.product_images.is_primary', true)
+
+    // Ordenamiento (por defecto: display_order de la colección)
+    // Nota: Supabase no soporta ordenar por campos relacionados de forma nativa
+    // así que ordenamos después de obtener los datos
+    productsQuery = productsQuery.order('display_order', { ascending: true })
+
+    // Paginación
+    productsQuery = productsQuery.range(offset, offset + limit - 1)
+
+    const { data: productsData, error: productsError } = await productsQuery
+
+    if (productsError) {
+      console.error('Error fetching collection products:', productsError)
+      return {
+        ...transformCollection(collection),
+        products: [],
+      }
+    }
+
+    // Transformar al formato esperado
+    let products: ProductListItem[] = (productsData || []).map((item: any) => ({
+      id: item.products.id,
+      name: item.products.name,
+      slug: item.products.slug,
+      price: item.products.price,
+      compareAtPrice: item.products.compare_at_price,
+      image: item.products.product_images?.[0]?.url || '/placeholder-product.jpg',
+      category: item.products.categories?.name || 'Sin categoría',
+      categorySlug: item.products.categories?.slug || '',
+      isNew: item.products.is_new || false,
+      isSale: item.products.is_on_sale || false,
+      isFeatured: item.products.is_featured || false,
+    }))
+
+    // Ordenar en memoria si se especificó sortBy
+    if (options?.sortBy) {
+      switch (options.sortBy) {
+        case 'price_asc':
+          products = products.sort((a, b) => a.price - b.price)
+          break
+        case 'price_desc':
+          products = products.sort((a, b) => b.price - a.price)
+          break
+        case 'name':
+          products = products.sort((a, b) => a.name.localeCompare(b.name))
+          break
+        case 'newest':
+          // Ya vienen ordenados por display_order, no podemos ordenar por created_at
+          // sin tener ese campo en el resultado
+          break
+      }
+    }
+
+    return {
+      ...transformCollection(collection),
+      products,
+    }
+  } catch (error) {
+    console.error('Error in getCollectionBySlug:', error)
+    return null
+  }
 }
 
-const mockCollectionProducts: MockCollectionProduct[] = [
-  // Essentials
-  {
-    id: "prod_001",
-    name: "Remera Essential Blanca",
-    slug: "remera-essential-blanca",
-    price: 45000,
-    image: "/images/products/remera-essential-blanca-1.jpg",
-    category: "remeras",
-    isNew: true,
-    collectionSlug: "essentials",
-  },
-  {
-    id: "prod_002",
-    name: "Remera Essential Negra",
-    slug: "remera-essential-negra",
-    price: 45000,
-    image: "/images/products/remera-essential-negra-1.jpg",
-    category: "remeras",
-    collectionSlug: "essentials",
-  },
-  {
-    id: "prod_009",
-    name: "Camisa Lino Blanca",
-    slug: "camisa-lino-blanca",
-    price: 62000,
-    salePrice: 43400,
-    image: "/images/products/camisa-lino-blanca-1.jpg",
-    category: "tops",
-    isSale: true,
-    collectionSlug: "essentials",
-  },
-  // AW 2025
-  {
-    id: "prod_003",
-    name: "Pantalon Wide Beige",
-    slug: "pantalon-wide-beige",
-    price: 78000,
-    image: "/images/products/pantalon-wide-beige-1.jpg",
-    category: "pantalones",
-    isNew: true,
-    collectionSlug: "aw-2025",
-  },
-  {
-    id: "prod_007",
-    name: "Blazer Oversize Negro",
-    slug: "blazer-oversize-negro",
-    price: 145000,
-    salePrice: 101500,
-    image: "/images/products/blazer-oversize-negro-1.jpg",
-    category: "tops",
-    isSale: true,
-    collectionSlug: "aw-2025",
-  },
-  {
-    id: "prod_012",
-    name: "Cardigan Oversize Beige",
-    slug: "cardigan-oversize-beige",
-    price: 98000,
-    salePrice: 68600,
-    image: "/images/products/cardigan-oversize-beige-1.jpg",
-    category: "tops",
-    isSale: true,
-    collectionSlug: "aw-2025",
-  },
-  // Minimal Office
-  {
-    id: "prod_005",
-    name: "Pollera Midi Plisada",
-    slug: "pollera-midi-plisada",
-    price: 68000,
-    image: "/images/products/pollera-midi-plisada-1.jpg",
-    category: "polleras",
-    collectionSlug: "minimal-office",
-  },
-  {
-    id: "prod_010",
-    name: "Pantalon Pinzas Gris",
-    slug: "pantalon-pinzas-gris",
-    price: 85000,
-    salePrice: 59500,
-    image: "/images/products/pantalon-pinzas-gris-1.jpg",
-    category: "pantalones",
-    isSale: true,
-    collectionSlug: "minimal-office",
-  },
-  // Weekend
-  {
-    id: "prod_006",
-    name: "Short Lino Natural",
-    slug: "short-lino-natural",
-    price: 52000,
-    image: "/images/products/short-lino-natural-1.jpg",
-    category: "shorts",
-    isNew: true,
-    collectionSlug: "weekend",
-  },
-  {
-    id: "prod_004",
-    name: "Top Minimal Negro",
-    slug: "top-minimal-negro",
-    price: 38000,
-    salePrice: 30400,
-    image: "/images/products/top-minimal-negro-1.jpg",
-    category: "tops",
-    isSale: true,
-    collectionSlug: "weekend",
-  },
-  // Accesorios
-  {
-    id: "prod_011",
-    name: "Bolso Tote Cuero",
-    slug: "bolso-tote-cuero",
-    price: 125000,
-    salePrice: 87500,
-    image: "/images/products/bolso-tote-cuero-1.jpg",
-    category: "accesorios",
-    isSale: true,
-    collectionSlug: "accesorios",
-  },
-  {
-    id: "prod_013",
-    name: "Cinturon Cuero Negro",
-    slug: "cinturon-cuero-negro",
-    price: 35000,
-    image: "/images/products/cinturon-cuero-negro-1.jpg",
-    category: "accesorios",
-    collectionSlug: "accesorios",
-  },
-  {
-    id: "prod_014",
-    name: "Panuelo Seda Estampado",
-    slug: "panuelo-seda-estampado",
-    price: 28000,
-    image: "/images/products/panuelo-seda-estampado-1.jpg",
-    category: "accesorios",
-    isNew: true,
-    collectionSlug: "accesorios",
-  },
-];
+// ============================================
+// OBTENER CONTEO DE PRODUCTOS POR COLECCIÓN
+// ============================================
+
+export async function getCollectionProductCount(collectionId: string): Promise<number> {
+  try {
+    const supabase = await createClient()
+
+    const { count, error } = await supabase
+      .from('product_collections')
+      .select('*', { count: 'exact', head: true })
+      .eq('collection_id', collectionId)
+
+    if (error) {
+      console.error('Error counting collection products:', error)
+      return 0
+    }
+
+    return count || 0
+  } catch (error) {
+    console.error('Error in getCollectionProductCount:', error)
+    return 0
+  }
+}
+
+// ============================================
+// HELPER DE TRANSFORMACIÓN
+// ============================================
+
+function transformCollection(data: any): Collection {
+  return {
+    id: data.id,
+    name: data.name,
+    slug: data.slug,
+    description: data.description,
+    imageUrl: data.image_url,
+    bannerUrl: data.banner_url,
+    isFeatured: data.is_featured,
+    isActive: data.is_active,
+    productCount: data.product_count,
+  }
+}

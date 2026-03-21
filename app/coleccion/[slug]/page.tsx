@@ -1,53 +1,47 @@
-import { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { getCollectionBySlug, getAllCollectionSlugs } from "@/lib/collections";
-import CollectionContent from "@/components/collection/CollectionContent";
+import { Metadata } from "next"
+import { notFound } from "next/navigation"
+import { getCollectionBySlug, getAllCollectionSlugs } from "@/lib/collections"
+import CollectionContent from "./CollectionContent"
 
-interface CollectionPageProps {
-  params: Promise<{
-    slug: string;
-  }>;
+interface Props {
+  params: Promise<{ slug: string }>
 }
 
-// Generar rutas estaticas
+// Generar páginas estáticas para todas las colecciones
 export async function generateStaticParams() {
-  const slugs = await getAllCollectionSlugs();
-  return slugs.map((slug) => ({ slug }));
+  const slugs = await getAllCollectionSlugs()
+  return slugs.map((slug) => ({ slug }))
 }
 
-// Generar metadata dinamica
-export async function generateMetadata({ params }: CollectionPageProps): Promise<Metadata> {
-  const { slug } = await params;
-  const response = await getCollectionBySlug(slug);
+// Metadata dinámica
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params
+  const collection = await getCollectionBySlug(slug)
 
-  if (!response.success || !response.data) {
+  if (!collection) {
     return {
-      title: "Coleccion no encontrada | KIREN",
-    };
+      title: "Colección no encontrada | KIREN",
+    }
   }
-
-  const collection = response.data;
 
   return {
     title: `${collection.name} | KIREN`,
-    description: collection.description,
+    description: collection.description || `Descubrí nuestra colección ${collection.name}`,
     openGraph: {
       title: `${collection.name} | KIREN`,
-      description: collection.description,
-      images: collection.image ? [collection.image] : [],
-      type: "website",
+      description: collection.description || `Descubrí nuestra colección ${collection.name}`,
+      images: collection.bannerUrl ? [collection.bannerUrl] : [],
     },
-  };
+  }
 }
 
-// Componente de la pagina
-export default async function CollectionPage({ params }: CollectionPageProps) {
-  const { slug } = await params;
-  const response = await getCollectionBySlug(slug);
+export default async function ColeccionPage({ params }: Props) {
+  const { slug } = await params
+  const collection = await getCollectionBySlug(slug)
 
-  if (!response.success || !response.data) {
-    notFound();
+  if (!collection) {
+    notFound()
   }
 
-  return <CollectionContent collection={response.data} />;
+  return <CollectionContent collection={collection} />
 }
