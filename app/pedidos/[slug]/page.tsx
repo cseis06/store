@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
 import { createClient } from "@/lib/supabase/server"
-import { getOrderById } from "@/lib/orders.server"
+import { getOrderByNumber } from "@/lib/orders.server"
 import { 
   getOrderStatusLabel, 
   getPaymentStatusLabel, 
@@ -11,7 +11,7 @@ import {
 } from "@/lib/orders"
 
 interface Props {
-  params: Promise<{ id: string }>
+  params: Promise<{ slug: string }>
 }
 
 // Formateador de precio
@@ -49,8 +49,9 @@ const getStatusColor = (status: string): string => {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { id } = await params
-  const order = await getOrderById(id)
+  const { slug } = await params
+  const decodedOrderNumber = decodeURIComponent(slug)
+  const order = await getOrderByNumber(decodedOrderNumber)
 
   if (!order) {
     return { title: "Pedido no encontrado | KIREN" }
@@ -70,8 +71,9 @@ export default async function OrderDetailPage({ params }: Props) {
     redirect("/auth/login?redirect=/pedidos")
   }
 
-  const { id } = await params
-  const order = await getOrderById(id)
+  const { orderNumber } = await params
+  const decodedOrderNumber = decodeURIComponent(orderNumber)
+  const order = await getOrderByNumber(decodedOrderNumber)
 
   if (!order) {
     notFound()

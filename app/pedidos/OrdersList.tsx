@@ -236,7 +236,7 @@ export default function OrdersList({ orders }: OrdersListProps) {
                     </div>
 
                     <Link
-                      href={`/pedidos/${order.id}`}
+                      href={`/pedidos/${order.orderNumber}`}
                       className="inline-flex items-center gap-2 font-inter text-sm hover:text-black transition-colors text-black/60"
                     >
                       Ver detalles

@@ -68,7 +68,7 @@ export async function getMyOrders(): Promise<Order[]> {
   }
 }
 
-export async function getOrderById(orderId: string): Promise<Order | null> {
+export async function getOrderByNumber(orderNumber: string): Promise<Order | null> {
   try {
     const supabase = await createClient()
 
@@ -91,7 +91,7 @@ export async function getOrderById(orderId: string): Promise<Order | null> {
           subtotal
         )
       `)
-      .eq('id', orderId)
+      .eq('order_number', orderNumber)
       .eq('user_id', user.id)
       .single()
 
@@ -124,7 +124,7 @@ export async function getOrderById(orderId: string): Promise<Order | null> {
       updatedAt: data.updated_at,
     }
   } catch (error) {
-    console.error('Error in getOrderById:', error)
+    console.error('Error in getOrderByNumber:', error)
     return null
   }
 }
