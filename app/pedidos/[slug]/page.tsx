@@ -50,8 +50,8 @@ const getStatusColor = (status: string): string => {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
-  const decodedOrderNumber = decodeURIComponent(slug)
-  const order = await getOrderByNumber(decodedOrderNumber)
+  const orderNumber = decodeURIComponent(slug)
+  const order = await getOrderByNumber(orderNumber)
 
   if (!order) {
     return { title: "Pedido no encontrado | KIREN" }
@@ -71,9 +71,9 @@ export default async function OrderDetailPage({ params }: Props) {
     redirect("/auth/login?redirect=/pedidos")
   }
 
-  const { orderNumber } = await params
-  const decodedOrderNumber = decodeURIComponent(orderNumber)
-  const order = await getOrderByNumber(decodedOrderNumber)
+  const { slug } = await params
+  const orderNumber = decodeURIComponent(slug)
+  const order = await getOrderByNumber(orderNumber)
 
   if (!order) {
     notFound()

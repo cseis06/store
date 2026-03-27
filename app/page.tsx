@@ -4,23 +4,40 @@ import FeaturedCollection from "@/components/home/FeaturedCollection";
 import Categories from "@/components/home/Categories";
 import PromoBanner from "@/components/home/PromoBanner";
 
-export default function Home() {
+import { getHeroSlides, getPromoBanner } from "@/lib/banners";
+import { getFeaturedProducts } from "@/lib/products";
+import { getFeaturedCollectionWithProducts } from "@/lib/collections";
+import { getAllCategories } from "@/lib/categories";
+
+export default async function Home() {
+  // Obtener todos los datos en paralelo
+  const [heroSlides, featuredProducts, featuredCollection, categories, promoBanner] = 
+    await Promise.all([
+      getHeroSlides(),
+      getFeaturedProducts(4),
+      getFeaturedCollectionWithProducts(4),
+      getAllCategories(),
+      getPromoBanner(),
+    ]);
+
   return (
     <>
       {/* Hero Carrusel */}
-      <Hero />
+      <Hero slides={heroSlides} />
 
       {/* Productos destacados */}
-      <FeaturedProducts />
+      <FeaturedProducts products={featuredProducts} />
 
       {/* Colección destacada */}
-      <FeaturedCollection />
+      {featuredCollection && (
+        <FeaturedCollection collection={featuredCollection} />
+      )}
 
       {/* Categorías */}
-      <Categories />
+      <Categories categories={categories} />
 
       {/* Promo */}
-      <PromoBanner />
+      {promoBanner && <PromoBanner banner={promoBanner} />}
     </>
   );
 }

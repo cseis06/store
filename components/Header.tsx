@@ -184,7 +184,7 @@ export default function Header() {
               <button
                 aria-label="Mi cuenta"
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                className="text-black/80 hover:text-black transition-colors duration-300"
+                className="text-black/80 hover:text-black transition-colors duration-300 cursor-pointer"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"

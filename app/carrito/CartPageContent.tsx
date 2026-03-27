@@ -232,14 +232,11 @@ export default function CartPageContent() {
                 </p>
                 <div className="flex justify-center gap-2">
                   {/* Iconos de métodos de pago */}
-                  <div className="w-10 h-6 bg-black/10 rounded flex items-center justify-center">
-                    <span className="text-[8px] font-medium text-black/40">VISA</span>
+                  <div className="w-auto h-6 px-2 bg-black/10 rounded flex items-center justify-center">
+                    <span className="text-[8px] font-medium text-black/40">Transferencia Bancaria</span>
                   </div>
-                  <div className="w-10 h-6 bg-black/10 rounded flex items-center justify-center">
-                    <span className="text-[8px] font-medium text-black/40">MC</span>
-                  </div>
-                  <div className="w-10 h-6 bg-black/10 rounded flex items-center justify-center">
-                    <span className="text-[8px] font-medium text-black/40">AMEX</span>
+                  <div className="w-auto h-6 px-2 bg-black/10 rounded flex items-center justify-center">
+                    <span className="text-[8px] font-medium text-black/40">Efectivo c/Entrega</span>
                   </div>
                 </div>
               </div>

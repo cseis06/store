@@ -3,37 +3,32 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import Image from "next/image";
 import gsap from "gsap";
+import type { Banner } from "@/lib/banners";
 
-// Slides del carrusel - reemplazar con imágenes reales
-const slides = [
-  {
-    id: 1,
-    src: "/images/hero/slide-1.jpg",
-    alt: "Colección minimalista kiren",
-  },
-  {
-    id: 2,
-    src: "/images/hero/slide-2.jpg",
-    alt: "Esenciales de temporada",
-  },
-  {
-    id: 3,
-    src: "/images/hero/slide-3.jpg",
-    alt: "Nueva colección KIREN",
-  },
+interface HeroProps {
+  slides: Banner[];
+}
+
+// Slides por defecto (fallback)
+const defaultSlides = [
+  { id: "1", imageAlt: "Colección minimalista KIREN" },
+  { id: "2", imageAlt: "Esenciales de temporada" },
+  { id: "3", imageAlt: "Nueva colección KIREN" },
 ];
 
-const AUTOPLAY_INTERVAL = 5000; // 5 segundos entre slides
-const TRANSITION_DURATION = 1.2; // Duración de la transición en segundos
+const AUTOPLAY_INTERVAL = 5000;
+const TRANSITION_DURATION = 1.2;
 
-export default function Hero() {
+export default function Hero({ slides }: HeroProps) {
   const heroRef = useRef<HTMLElement>(null);
   const slidesRef = useRef<HTMLDivElement>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const autoplayRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Función para ir a un slide específico
+  // Usar slides de props o fallback
+  const heroSlides = slides.length > 0 ? slides : defaultSlides;
+
   const goToSlide = useCallback(
     (index: number) => {
       if (isAnimating || index === currentSlide) return;
@@ -47,7 +42,6 @@ export default function Hero() {
       const currentEl = slideElements[currentSlide];
       const nextEl = slideElements[index];
 
-      // Timeline de transición suave
       const tl = gsap.timeline({
         onComplete: () => {
           setCurrentSlide(index);
@@ -55,7 +49,6 @@ export default function Hero() {
         },
       });
 
-      // Fade out del slide actual con ligero zoom
       tl.to(currentEl, {
         opacity: 0,
         scale: 1.05,
@@ -63,7 +56,6 @@ export default function Hero() {
         ease: "power2.inOut",
       });
 
-      // Fade in del siguiente slide
       tl.fromTo(
         nextEl,
         { opacity: 0, scale: 1.1 },
@@ -73,20 +65,20 @@ export default function Hero() {
           duration: TRANSITION_DURATION,
           ease: "power2.inOut",
         },
-        0 // Iniciar al mismo tiempo
+        0
       );
     },
     [currentSlide, isAnimating]
   );
 
-  // Siguiente slide
   const nextSlide = useCallback(() => {
-    const next = (currentSlide + 1) % slides.length;
+    const next = (currentSlide + 1) % heroSlides.length;
     goToSlide(next);
-  }, [currentSlide, goToSlide]);
+  }, [currentSlide, goToSlide, heroSlides.length]);
 
-  // Autoplay
   useEffect(() => {
+    if (heroSlides.length <= 1) return;
+    
     autoplayRef.current = setInterval(() => {
       nextSlide();
     }, AUTOPLAY_INTERVAL);
@@ -96,32 +88,26 @@ export default function Hero() {
         clearInterval(autoplayRef.current);
       }
     };
-  }, [nextSlide]);
+  }, [nextSlide, heroSlides.length]);
 
-  // Pausar autoplay al interactuar
   const handleDotClick = (index: number) => {
-    // Resetear el autoplay
     if (autoplayRef.current) {
       clearInterval(autoplayRef.current);
     }
     goToSlide(index);
-    // Reiniciar autoplay
     autoplayRef.current = setInterval(() => {
       nextSlide();
     }, AUTOPLAY_INTERVAL);
   };
 
-  // Animación de entrada inicial
   useEffect(() => {
     const ctx = gsap.context(() => {
-      // Fade in del hero completo
       gsap.fromTo(
         heroRef.current,
         { opacity: 0 },
         { opacity: 1, duration: 1, ease: "power2.out", delay: 0.2 }
       );
 
-      // Animación del primer slide
       const firstSlide = slidesRef.current?.querySelector(".hero-slide");
       if (firstSlide) {
         gsap.fromTo(
@@ -131,7 +117,6 @@ export default function Hero() {
         );
       }
 
-      // Animación de los dots
       gsap.fromTo(
         ".hero-dot",
         { opacity: 0, y: 20 },
@@ -157,73 +142,73 @@ export default function Hero() {
     >
       {/* Contenedor de slides */}
       <div ref={slidesRef} className="relative w-full h-full">
-        {slides.map((slide, index) => (
+        {heroSlides.map((slide, index) => (
           <div
             key={slide.id}
             className="hero-slide absolute inset-0"
             style={{ opacity: index === 0 ? 1 : 0 }}
           >
-            {/* Imagen del slide */}
             <div className="relative w-full h-full">
-              {/* Placeholder mientras no hay imágenes reales */}
-              <div className="absolute inset-0 bg-gradient-to-br from-neutral-100 to-neutral-200 flex items-center justify-center">
-                <div className="text-center text-black/20">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={0.5}
-                    stroke="currentColor"
-                    className="w-20 h-20 mx-auto mb-4"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
-                    />
-                  </svg>
-                  <p className="font-inter text-sm">{slide.alt}</p>
-                  <p className="font-inter text-xs mt-1">Slide {slide.id}</p>
-                </div>
-              </div>
-
-              {/* 
-                Descomentar cuando tengas las imágenes reales:
+              {slide.imageUrl ? (
                 <Image
-                  src={slide.src}
-                  alt={slide.alt}
+                  src={slide.imageUrl}
+                  alt={slide.imageAlt || `Slide ${index + 1}`}
                   fill
                   priority={index === 0}
                   className="object-cover"
                   sizes="100vw"
                 />
-              */}
+              ) : (
+                /* Placeholder mientras no hay imágenes */
+                <div className="absolute inset-0 bg-gradient-to-br from-neutral-100 to-neutral-200 flex items-center justify-center">
+                  <div className="text-center text-black/20">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={0.5}
+                      stroke="currentColor"
+                      className="w-20 h-20 mx-auto mb-4"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
+                      />
+                    </svg>
+                    <p className="font-inter text-sm">{slide.imageAlt || slide.description}</p>
+                    <p className="font-inter text-xs mt-1">Slide {index + 1}</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         ))}
       </div>
 
       {/* Dots de navegación */}
-      <div className="absolute bottom-8 lg:bottom-12 left-1/2 -translate-x-1/2 flex gap-3">
-        {slides.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => handleDotClick(index)}
-            aria-label={`Ir al slide ${index + 1}`}
-            className="hero-dot group relative p-2"
-          >
-            <span
-              className={`block h-[2px] transition-all duration-500 ease-out ${
-                index === currentSlide
-                  ? "w-8 bg-black"
-                  : "w-6 bg-black/25 group-hover:bg-black/50"
-              }`}
-            />
-          </button>
-        ))}
-      </div>
+      {heroSlides.length > 1 && (
+        <div className="absolute bottom-8 lg:bottom-12 left-1/2 -translate-x-1/2 flex gap-3">
+          {heroSlides.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => handleDotClick(index)}
+              aria-label={`Ir al slide ${index + 1}`}
+              className="hero-dot group relative p-2"
+            >
+              <span
+                className={`block h-[2px] transition-all duration-500 ease-out ${
+                  index === currentSlide
+                    ? "w-8 bg-black"
+                    : "w-6 bg-black/25 group-hover:bg-black/50"
+                }`}
+              />
+            </button>
+          ))}
+        </div>
+      )}
 
-      {/* Indicador de scroll (opcional) */}
+      {/* Indicador de scroll */}
       <div className="absolute bottom-8 lg:bottom-12 right-6 lg:right-12 hidden lg:block">
         <div className="flex flex-col items-center gap-2 text-black/40">
           <span className="font-inter text-[10px] tracking-widest uppercase">

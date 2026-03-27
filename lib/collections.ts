@@ -55,6 +55,27 @@ export async function getFeaturedCollections(limit: number = 4): Promise<Collect
 }
 
 // ============================================
+// OBTENER COLECCIÓN DESTACADA CON PRODUCTOS (para home)
+// ============================================
+
+export async function getFeaturedCollectionWithProducts(productLimit: number = 4): Promise<CollectionWithProducts | null> {
+  try {
+    // Obtener la primera colección destacada
+    const collections = await getFeaturedCollections(1)
+    
+    if (collections.length === 0) {
+      return null
+    }
+
+    // Obtener la colección con sus productos
+    return getCollectionBySlug(collections[0].slug, { limit: productLimit })
+  } catch (error) {
+    console.error('Error in getFeaturedCollectionWithProducts:', error)
+    return null
+  }
+}
+
+// ============================================
 // OBTENER TODOS LOS SLUGS (para generateStaticParams)
 // ============================================
 
